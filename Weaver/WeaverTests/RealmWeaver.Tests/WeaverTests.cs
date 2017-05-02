@@ -601,7 +601,7 @@ namespace RealmWeaver
         [TestCase("Int32")]
         [TestCase("Int64")]
         [TestCase("String")]
-        public void WovenCopyToRealm_ShouldAlwaysSetPrimaryKeyProperties(string type)
+        public void WovenCopyToRealm_ShouldNeverSetPrimaryKeyProperties(string type)
         {
             var objectType = _assembly.GetType($"AssemblyToProcess.PrimaryKey{type}Object");
             var instance = (dynamic)Activator.CreateInstance(objectType);
@@ -610,7 +610,7 @@ namespace RealmWeaver
 
             var propertyType = objectType.GetProperty(type + "Property").PropertyType;
             var defaultValue = propertyType.IsValueType ? Activator.CreateInstance(propertyType).ToString() : string.Empty;
-            Assert.That(instance.LogList, Is.EqualTo(new List<string> { "IsManaged", $"RealmObject.Set{type}ValueUnique(propertyName = \"{type}Property\", value = {defaultValue})" }));
+            Assert.That(instance.LogList, Does.Not.Contain($"RealmObject.Set{type}ValueUnique(propertyName = \"{type}Property\", value = {defaultValue})"));
         }
 
         [TestCase("RequiredObject", true)]
@@ -645,19 +645,6 @@ namespace RealmWeaver
             Assert.That(instance.LogList, Is.EqualTo(targetList));
         }
 
-        [TestCase("PKObjectOne")]
-        [TestCase("PKObjectTwo")]
-        [TestCase("PKObjectThree")]
-        public void WovenCopyToRealm_ShouldSetPrimaryKeysFirst(string @class)
-        {
-            var objectType = _assembly.GetType($"AssemblyToProcess.{@class}");
-            var instance = (dynamic)Activator.CreateInstance(objectType);
-
-            CopyToRealm(objectType, instance);
-
-            Assert.That(((IEnumerable<string>)instance.LogList).Take(2), Is.EqualTo(new[] { "IsManaged", "RealmObject.SetInt32ValueUnique(propertyName = \"Id\", value = 0)" }));
-        }
-
         [Test]
         public void WovenCopyToRealm_ShouldResetBacklinks()
         {
@@ -676,7 +663,7 @@ namespace RealmWeaver
             var helperType = (Type)wovenAttribute.ConstructorArguments[0].Value;
             var helper = (IRealmObjectHelper)Activator.CreateInstance(helperType);
             instance.IsManaged = true;
-            helper.CopyToRealm(instance, update: false, setPrimaryKey: true);
+            helper.CopyToRealm(instance, update: false, skipDefaults: true);
         }
 
 #if(DEBUG)

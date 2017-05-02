@@ -174,13 +174,17 @@ namespace Realms.Dynamic
             {
                 case Schema.PropertyType.Int:
                     argumentType = typeof(long);
-                    if (property.IsNullable)
+                    if (property.IsPrimaryKey && property.IsNullable)
                     {
-                        setter = GetSetMethod<long?>(dummyHandle.SetNullableInt64);
+                        setter = GetSetMethod<long?>(dummyHandle.SetNullableInt64Unique);
                     }
                     else if (property.IsPrimaryKey)
                     {
                         setter = GetSetMethod<long>(dummyHandle.SetInt64Unique);
+                    }
+                    else if (property.IsNullable)
+                    {
+                        setter = GetSetMethod<long?>(dummyHandle.SetNullableInt64);
                     }
                     else
                     {
